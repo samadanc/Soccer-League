@@ -1,5 +1,9 @@
+from math import *
 from Team import *
 from Player import *
+from random import *
+from Match import *
+
 #from operator import itemgetter
 
 class League():
@@ -8,6 +12,7 @@ class League():
         self._matches = []
         self._ranking = []
         self._teamWins = {}
+        self._league = [[]]
 
     def _setUpTeamWins(self):
         for i in self._teams:
@@ -48,4 +53,23 @@ class League():
         if len(self._matches) == 0:
             self._calculateRanking()
         return self._ranking
+
+
+######################Still in Development############################
+    #Generate levels of the tournament and add teams to it
+    def generateLeague(self):
+        self._league * ceil((log(len(self._teams))/log(2)))
+        temp = self._teams
+        while temp != 0:
+            if len(temp) == 1:
+                team = temp.pop()
+                self._league[0].append(Match(team, team))
+                
+            t1 = temp.pop(randint(0, len(temp)-1))
+            t2 = temp.pop(randint(0, len(temp)-1))
+            self._league[0].append(Match(t1,t2))
+            
+
+
+            
 
