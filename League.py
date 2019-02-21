@@ -59,6 +59,8 @@ class League():
     #Generate levels of the tournament and add teams to it
     def generateLeague(self):
         self._league * ceil((log(len(self._teams))/log(2)))
+        for i in self._league:
+            i.insert(0, False)   #This false represents that this levels hasn't been cleared
         temp = self._teams
         while temp != 0:
             if len(temp) == 1:
@@ -68,8 +70,41 @@ class League():
             t1 = temp.pop(randint(0, len(temp)-1))
             t2 = temp.pop(randint(0, len(temp)-1))
             self._league[0].append(Match(t1,t2))
-            
 
 
-            
+    #Plays a level of the tournament starting from the bottom
+    def playLevel(self):
+        for i in self._league:
+            if i[0] == False:
+                play = i
+                print("The matches for level ", i, " have begun.\n")
+                break
+
+        
+        for i in range(len(play)):
+            currentMatch = play[i]
+            print("Match: ", i+1)
+            print("Team 1: ", currentMatch.getTeam1())
+            print(" vs \n","Team 2: ", currentMatch.getTeam2, "\n")
+
+            #Need to make this more abstract, but for now the user enters the team no# to indicate a goal
+            inp = input("Insert the team number to score a goal and -1 to end match: ")
+            if inp == -1:
+                currentMatch.endMatch()
+                print("The winner of the match is: ", currentMatch.getWinner())
+
+            else:
+                while inp != -1:
+                    if inp == 1:
+                        currentMatch.incrementTeamOneScore()
+                        inp = input("Insert the team number to score a goal and -1 to end match: ")
+                    elif inp == 2:
+                        currentMatch.incrementTeamTwoScore()
+                        inp = input("Insert the team number to score a goal and -1 to end match: ")
+
+                currentMatch.endMatch()
+                print("The winner of the match is: ", currentMatch.getWinner())
+                
+                
+                        
 
