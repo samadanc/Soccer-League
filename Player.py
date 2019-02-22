@@ -18,4 +18,7 @@ class Player():
 
     def isSubstitute(self):
         return self._substitute
-p = Player()
+
+    def setSubstitute(self, sub):
+        self._substitute = sub
+

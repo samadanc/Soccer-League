@@ -4,107 +4,116 @@ from Player import *
 from random import *
 from Match import *
 
-#from operator import itemgetter
 
 class League():
     def __init__(self):
-        self._teams = []
-        self._matches = []
+        self._teams = {}
         self._ranking = []
-        self._teamWins = {}
         self._league = [[]]
+        self._next = []
 
-    def _setUpTeamWins(self):
-        for i in self._teams:
-            self._teamWins[i] = i.getWins()
-            
-    #Bad Efficiency Calculate Ranking
-    def _calculateRanking(self):
-        self._ranking.clear()
-        self._setUpTeamWins()
-        for i in range(len(self._teams)):
-            itValues = iter(self._teamWins.values())
-            itKeys = iter(self._teamWins.keys())
-            currMaxWins = next(itValues)
-            currMaxTeam = next(itKeys)
-            for j in range(1,len(self._teamWins)):
-                nextValue = next(itValues)
-                nextTeam = next(itKeys)
-                if nextValue == currMaxWins:
-                    if nextTeam.getTotalGoals() > currMaxTeam.getTotalGoals():
-                        currMaxWins = nextValue
-                        currMaxTeam = nextTeam
-                elif nextValue > currMaxWins:
-                    currMaxWins = nextValue
-                    currMaxTeam = nextTeam
-            self._ranking.append(currMaxTeam)
-            self._teamWins.pop(currMaxTeam)
-        
+
+    #Add teams to the league
     def addTeam(self, team):
-        self._teams.append(team)
-
-    def addMatch(self, match):
-        self._calculateRanking()
-        self._matches.append(match)
-        self._teamWins.update({match.getTeam1(): match.getTeam1().getWins()})
-        self._teamWins.update({match.getTeam2(): match.getTeam1().getWins()})
-        
-    def getRankings(self):
-        if len(self._matches) == 0:
-            self._calculateRanking()
-        return self._ranking
+        if team in self._teams:
+            print("Team is already in the league")
+        else:
+            self._teams[team] = team.getWins() - team.getLosses()
 
 
-######################Still in Development############################
     #Generate levels of the tournament and add teams to it
     def generateLeague(self):
-        self._league * ceil((log(len(self._teams))/log(2)))
-        for i in self._league:
-            i.insert(0, False)   #This false represents that this levels hasn't been cleared
-        temp = self._teams
-        while temp != 0:
+        for i in range(ceil((log(len(self._teams))/log(2)))):
+            self._league.append([False])
+        self._league[0].append(False)
+        #This false represents that this levels haven't been cleared
+            
+        temp = list(self._teams.keys())
+        shuffle(temp)
+        while len(temp) != 0:
             if len(temp) == 1:
                 team = temp.pop()
                 self._league[0].append(Match(team, team))
-                
-            t1 = temp.pop(randint(0, len(temp)-1))
-            t2 = temp.pop(randint(0, len(temp)-1))
-            self._league[0].append(Match(t1,t2))
+            elif len(temp) == 2:
+                self._league[0].append(Match(temp.pop(),temp.pop()))
+            else:
+                t1 = temp.pop()
+                t2 = temp.pop()
+                self._league[0].append(Match(t1,t2))
+
 
 
     #Plays a level of the tournament starting from the bottom
+    ## Account for draws later
     def playLevel(self):
-        for i in self._league:
-            if i[0] == False:
-                play = i
+        self._next.clear()
+        for i in range(len(self._league)):
+            if self._league[i][0] == False:
+                play = self._league[i]
+                nextLevel = i
                 print("The matches for level ", i, " have begun.\n")
                 break
 
         
-        for i in range(len(play)):
+        for i in range(1,len(play)):
             currentMatch = play[i]
-            print("Match: ", i+1)
-            print("Team 1: ", currentMatch.getTeam1())
-            print(" vs \n","Team 2: ", currentMatch.getTeam2, "\n")
+            print("Match: ", i)
+            print("Team 1: ", currentMatch.getTeam1().getName())
+            print(" vs ")
+            print("Team 2: ", currentMatch.getTeam2().getName(), "\n")
 
             #Need to make this more abstract, but for now the user enters the team no# to indicate a goal
-            inp = input("Insert the team number to score a goal and -1 to end match: ")
+            inp = int(input("Insert the team number to score a goal and -1 to end match: "))
             if inp == -1:
                 currentMatch.endMatch()
-                print("The winner of the match is: ", currentMatch.getWinner())
-
+                print("The winner of the match is: ", currentMatch.getWinner().getName())
+                self._next.append(currentMatch.getWinner())
+                self._teams[currentMatch.getTeam1()] = currentMatch.getTeam1().getWins() - currentMatch.getTeam1().getLosses()
+                self._teams[currentMatch.getTeam2()] = currentMatch.getTeam2().getWins() - currentMatch.getTeam2().getLosses()
+                
             else:
                 while inp != -1:
                     if inp == 1:
                         currentMatch.incrementTeamOneScore()
-                        inp = input("Insert the team number to score a goal and -1 to end match: ")
+                        inp = int(input("Insert the team number to score a goal and -1 to end match: "))
                     elif inp == 2:
                         currentMatch.incrementTeamTwoScore()
-                        inp = input("Insert the team number to score a goal and -1 to end match: ")
+                        inp = int(input("Insert the team number to score a goal and -1 to end match: "))
 
                 currentMatch.endMatch()
-                print("The winner of the match is: ", currentMatch.getWinner())
+                self._teams[currentMatch.getTeam1()] = currentMatch.getTeam1().getWins() - currentMatch.getTeam1().getLosses()
+                self._teams[currentMatch.getTeam2()] = currentMatch.getTeam2().getWins() - currentMatch.getTeam2().getLosses()
+                print("The winner of the match is: ", currentMatch.getWinner().getName())
+                self._next.append(currentMatch.getWinner())
+
+        self._league[nextLevel][0] = True
+
+    def generateNextLevel(self):
+        for i in range(len(self._league)):
+            if self._league[i][0] == False:
+                nextLevel = i
+                break
+            
+        while len(self._next) != 0:
+            if len(self._next) == 1:
+                team = self._next.pop()
+                self._league[nextLevel].append(Match(team, team))
+            elif len(self._next) == 2:
+                self._league[nextLevel].append(Match(self._next.pop(),self._next.pop()))
+            else:
+                t1 = self._next.pop()
+                t2 = self._next.pop()
+                self._league[nextLevel].append(Match(t1,t2))
+        
+
+    #Calculates the ranking of the teams in the league
+    def calculateRanking(self):
+        self._ranking = sorted(self._teams.items(), key=lambda kv: kv[1])
+        return self._ranking
+    
+
                 
-                
+
+
                         
 
